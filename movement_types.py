@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Tuple
 import enum
 import time
+import logging
+
 from stupidArtnet import StupidArtnet
 
 POSITION_CHANNEL = 6 - 1 # channel 0indexed
@@ -9,18 +11,20 @@ SPEED_CHANNEL = 7 - 1 # channel 0indexed
 
 BROADCAST_IP = "192.168.0.255"
 
+logger = logging.getLogger(__name__)
+
 # Body part
 class BP(enum.Enum):
     nose = "nose"
     head = "head"
     body = "body"
     tail = "tail"
-    ltw = "left wing tip"
-    lmw = "left middle wing"
-    liw = "left inner wing"
-    rtw = "right wing tip"
-    rmw = "right middle wing"
-    riw = "right inner wing"
+    l_wingtip = "left wing tip"
+    l_wingmid = "left middle wing"
+    l_winginner = "left inner wing"
+    r_wingtip = "right wing tip"
+    r_wingmid = "right middle wing"
+    r_winginner = "right inner wing"
 
 
 @dataclass
@@ -34,7 +38,7 @@ class Motor:
     def setMovement(self, position, absolute=False):
 
         if absolute:
-            self.new_position = position
+            self.new_position = self.base_offset + position
         else:
             self.new_position = self.current_pos + position
 
@@ -65,7 +69,8 @@ class Position:
 
 class DMX:
 
-    def __init__(self):
+    def __init__(self, max_pos_value = 60):
+        self.max_pos_value = max_pos_value
         self.node = StupidArtnet(target_ip=BROADCAST_IP, universe=0,packet_size=512,fps=30,broadcast=True)
 
     def sendPositions(self, motors: Dict[BP, Motor]):
@@ -74,7 +79,15 @@ class DMX:
 
         for m in motors.values():
             start_channel = m.address - 1 # 0indexed
-            packet[start_channel + POSITION_CHANNEL] = m.new_position
+            position = m.new_position
+            if position < 0:
+                logger.warning("Position < 0! %d", position)
+                position = 0
+            elif position > self.max_pos_value:
+                logger.warning("Postiion > max value (%d)! (is %d)", self.max_pos_value, position)
+                position = self.max_pos_value
+
+            packet[start_channel + POSITION_CHANNEL] = position
             packet[start_channel + SPEED_CHANNEL] = m.speed
         
         self.node.set(packet)

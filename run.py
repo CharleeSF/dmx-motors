@@ -1,3 +1,4 @@
+import logging
 import sys
 
 sys.path.append(".")
@@ -5,28 +6,31 @@ sys.path.append(".")
 from movement_types import Position, Animation, BP, Motor, DMX
 
 # PLAY SETTINGS
-base_offset = 0
+base_offset = -10
+max_value = 60
 start_position = "zero"
 animation_to_play = "flap"
 
 ########################################################################
 ########################################################################
 
-dmx = DMX()
+logging.basicConfig(level=logging.INFO)
+
+dmx = DMX(max_pos_value=max_value)
 
 absolute_positions = {
     "zero": Position(
         {
-            BP.nose: 60,
-            BP.head: 50,
-            BP.body: 70,
+            BP.nose: 40,
+            BP.head: 25,
+            BP.body: 50,
             BP.tail: 60,
-            BP.ltw: 55,
-            BP.lmw: 15,
-            BP.liw: 60,
-            BP.riw: 60,
-            BP.rmw: 35,
-            BP.rtw: 55,
+            BP.l_wingtip: 55,
+            BP.l_wingmid: 15,
+            BP.l_winginner: 60,
+            BP.r_winginner: 60,
+            BP.r_wingmid: 35,
+            BP.r_wingtip: 55,
         },
         absolute=True,
     )
@@ -41,12 +45,12 @@ animations = {
                     BP.head: 0,
                     BP.body: 0,
                     BP.tail: 0,
-                    BP.ltw: 0,
-                    BP.lmw: 0,
-                    BP.liw: 0,
-                    BP.rtw: 0,
-                    BP.rmw: 0,
-                    BP.riw: 0,
+                    BP.l_wingtip: 0,
+                    BP.l_wingmid: 0,
+                    BP.l_winginner: 0,
+                    BP.r_wingtip: 0,
+                    BP.r_wingmid: 0,
+                    BP.r_winginner: 0,
                 },
                 absolute=False,
                 delay=5,
@@ -71,12 +75,12 @@ motors = {
     BP.head: Motor(11, base_offset),
     BP.body: Motor(21, base_offset),
     BP.tail: Motor(31, base_offset),
-    BP.ltw: Motor(41, base_offset),
-    BP.lmw: Motor(51, base_offset),
-    BP.liw: Motor(61, base_offset),
-    BP.riw: Motor(71, base_offset),
-    BP.rmw: Motor(81, base_offset),
-    BP.rtw: Motor(91, base_offset),
+    BP.l_wingtip: Motor(41, base_offset),
+    BP.l_wingmid: Motor(51, base_offset),
+    BP.l_winginner: Motor(61, base_offset),
+    BP.r_winginner: Motor(71, base_offset),
+    BP.r_wingmid: Motor(81, base_offset),
+    BP.r_wingtip: Motor(91, base_offset),
 }
 
 absolute_positions[start_position].setMotors(motors)
