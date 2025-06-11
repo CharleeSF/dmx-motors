@@ -1,13 +1,15 @@
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import enum
 import time
 import logging
+import msvcrt
 
 from stupidArtnet import StupidArtnet
 
 POSITION_CHANNEL = 6 - 1 # channel 0indexed
 SPEED_CHANNEL = 7 - 1 # channel 0indexed
+DEFAULT_SPEED = 150
 
 BROADCAST_IP = "192.168.0.255"
 
@@ -31,18 +33,24 @@ class BP(enum.Enum):
 class Motor:
 
     address: int
-    base_offset: int
     current_pos: int = 0
     new_position: int = 0
+    speed: int = DEFAULT_SPEED
 
     def setMovement(self, position, absolute=False):
 
         if absolute:
-            self.new_position = self.base_offset + position
+            self.new_position = position
         else:
             self.new_position = self.current_pos + position
 
-        self.speed = self.calculateSpeed(position)
+        # self.speed = self.calculateSpeed(position)
+
+    def incrementByOne(self):
+        self.new_position = self.current_pos + 1
+
+    def decrementByOne(self):
+        self.new_position = self.current_pos - 1
 
     def calculateSpeed(self, new_position):
         # TODO calculate
@@ -50,7 +58,9 @@ class Motor:
 
     def updateCurrentPos(self):
         self.current_pos = self.new_position
-
+    
+    def getCurrentPos(self):
+        return self.current_pos
 
 @dataclass
 class Position:
@@ -58,6 +68,7 @@ class Position:
     motor_positions: Dict[BP, int]
     absolute: bool = False
     delay: int = 10
+    calibrate: Optional["Position"] = None
 
     def __post_init__(self):
         # Check ranges here
@@ -65,7 +76,26 @@ class Position:
 
     def setMotors(self, motors: Dict[BP, Motor]):
         for bodypart, position in self.motor_positions.items():
-            motors[bodypart].setMovement(position, absolute=self.absolute)    
+            if self.calibrate:
+                calibration_offset = self.calibrate.motor_positions[bodypart]
+                corrected_position = position + calibration_offset
+                motors[bodypart].setMovement(corrected_position, absolute=self.absolute)
+            else:
+                motors[bodypart].setMovement(position, absolute=self.absolute)
+
+    @classmethod
+    def getFromMotors(cls, motors: Dict[BP, Motor]):
+        
+        bp_positions = {}
+        for bodypart, motor in motors.items():
+            bp_positions[bodypart] = motor.current_pos
+        return cls(bp_positions, absolute=True)
+
+    def addRelative(self, rel_pos: "Position"):
+        bp_positions = {}
+        for bodypart, distance in rel_pos.motor_positions.items():
+            bp_positions[bodypart] = self.motor_positions[bodypart] + distance
+        return Position(bp_positions, absolute=True)
 
 class DMX:
 
@@ -96,24 +126,3 @@ class DMX:
         for m in motors.values():
             m.updateCurrentPos()
 
-
-@dataclass
-class Animation:
-
-    # A list with positions and wait times
-    positions: List[Tuple[Position, int]]
-
-    def play(self, motors: Dict[BP, Motor], dmx: DMX, time_s: int = 60):
-
-        start = time.time()
-        finished = False
-        while not finished:
-
-            for pos in self.positions:
-                pos.setMotors(motors)
-                dmx.sendPositions(motors)
-                time.sleep(pos.delay)
-
-                if (time.time() - start) > time_s:
-                    finished = True
-                    break
