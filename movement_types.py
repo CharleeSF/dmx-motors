@@ -40,9 +40,19 @@ class Motor:
     def setMovement(self, position, absolute=False):
 
         if absolute:
-            self.new_position = position
+            new_position = position
         else:
-            self.new_position = self.current_pos + position
+            new_position = self.current_pos + position
+        
+        if new_position > 100:
+            logger.warning("New value > 100, refusing")
+            new_position = 100
+        
+        elif new_position < 0:
+            logger.warning("New value < 0, refusing")
+            new_position = 0
+        
+        self.new_position = new_position
 
         # self.speed = self.calculateSpeed(position)
 
@@ -68,7 +78,6 @@ class Position:
     motor_positions: Dict[BP, int]
     absolute: bool = False
     delay: int = 10
-    calibrate: Optional["Position"] = None
 
     def __post_init__(self):
         # Check ranges here
@@ -76,48 +85,63 @@ class Position:
 
     def setMotors(self, motors: Dict[BP, Motor]):
         for bodypart, position in self.motor_positions.items():
-            if self.calibrate:
-                calibration_offset = self.calibrate.motor_positions[bodypart]
-                corrected_position = position + calibration_offset
-                motors[bodypart].setMovement(corrected_position, absolute=self.absolute)
-            else:
-                motors[bodypart].setMovement(position, absolute=self.absolute)
+            motors[bodypart].setMovement(position, absolute=self.absolute)
 
     @classmethod
     def getFromMotors(cls, motors: Dict[BP, Motor]):
+        """
+        Return a Position object with values thar are currently
+        stored on the Motor objects
+        """
         
         bp_positions = {}
         for bodypart, motor in motors.items():
             bp_positions[bodypart] = motor.current_pos
         return cls(bp_positions, absolute=True)
 
-    def addRelative(self, rel_pos: "Position"):
+    @classmethod
+    def addRelative(cls, starting_pos: "Position", relative_pos: "Position"):
+        """
+        Add a relative position to a starting position
+        """
         bp_positions = {}
-        for bodypart, distance in rel_pos.motor_positions.items():
-            bp_positions[bodypart] = self.motor_positions[bodypart] + distance
+        for bodypart, distance in relative_pos.motor_positions.items():
+            bp_positions[bodypart] = starting_pos.motor_positions[bodypart] + distance
         return Position(bp_positions, absolute=True)
 
 class DMX:
 
-    def __init__(self, max_pos_value = 60):
+    def __init__(self, base_offset=0, max_pos_value = 60):
+        self.base_offset = base_offset
         self.max_pos_value = max_pos_value
         self.node = StupidArtnet(target_ip=BROADCAST_IP, universe=0,packet_size=512,fps=30,broadcast=True)
+
+    def getDmxValue(self, position: int):
+
+        range = self.max_pos_value - self.base_offset
+        relative = round(position / 100 * range)
+        return self.base_offset + relative
 
     def sendPositions(self, motors: Dict[BP, Motor]):
 
         packet = bytearray(512)
 
         for m in motors.values():
+            
             start_channel = m.address - 1 # 0indexed
+            
             position = m.new_position
+            
             if position < 0:
-                logger.warning("Position < 0! %d", position)
+                logger.warning("Position < 0! (is %d)", position)
                 position = 0
-            elif position > self.max_pos_value:
-                logger.warning("Postiion > max value (%d)! (is %d)", self.max_pos_value, position)
-                position = self.max_pos_value
+            elif position > 100:
+                logger.warning("Postiion > 100! (is %d)", position)
+                position = 100
 
-            packet[start_channel + POSITION_CHANNEL] = position
+            dmx_value = self.getDmxValue(position)
+
+            packet[start_channel + POSITION_CHANNEL] = dmx_value
             packet[start_channel + SPEED_CHANNEL] = m.speed
         
         self.node.set(packet)

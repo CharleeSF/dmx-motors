@@ -21,16 +21,14 @@ class Animation:
 
     def getAbsolutePositions(self, starting_position: Position):
 
-        positions = [starting_position]
+        positions = []
         for position in self.relative_positions:
             positions.append(
-                positions[-1].addRelative(position)
+                Position.addRelative(starting_position, position)
             )
         
         # Don't return the first one, this was the starting position before the animation started
-        return positions[1:]
-
-
+        return positions
 
     def play(self, motors: Dict[BP, Motor], dmx: DMX, time_s: int = 60):
 

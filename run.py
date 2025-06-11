@@ -9,8 +9,8 @@ from mover import mover
 from flap_animation import flap_animation
 
 # PLAY SETTINGS
-base_offset = 20
-max_value = 90
+base_offset = 0
+max_value = 50
 start_position = "neutral"
 animation_to_play = "flap"
 
@@ -19,25 +19,11 @@ animation_to_play = "flap"
 
 logging.basicConfig(level=logging.INFO)
 
-dmx = DMX(max_pos_value=max_value)
+dmx = DMX(base_offset=base_offset, max_pos_value=max_value)
 
-calibrate = Position(
-    {
-        BP.nose: 0,
-        BP.head: 0,
-        BP.body: 0,
-        BP.tail: 0,
-        BP.l_wingtip: 0,
-        BP.l_wingmid: 0,
-        BP.l_winginner: 0,
-        BP.r_winginner: 0,
-        BP.r_wingmid: 0,
-        BP.r_wingtip: 0,
-    },
-    absolute=True,
-)
-
-absolute_positions = {
+# The values are added to 0
+# Values are in  percentage of movement range (offset - max_value)
+starting_positions = {
     "neutral": Position(
         {
             BP.nose: 0,
@@ -51,14 +37,12 @@ absolute_positions = {
             BP.r_wingmid: 0,
             BP.r_wingtip: 0,
         },
-        absolute=True,
-        calibrate=calibrate,
     ),
     "dive": Position(
         {
-            BP.nose: 69,
-            BP.head: 45,
-            BP.body: 20,
+            BP.nose: 100,
+            BP.head: 80,
+            BP.body: 40,
             BP.tail: 0,
             BP.l_wingtip: 0,
             BP.l_wingmid: 0,
@@ -67,8 +51,6 @@ absolute_positions = {
             BP.r_wingmid: 0,
             BP.r_wingtip: 0,
         },
-        absolute=True,
-        calibrate=calibrate,
     ),
 }
 
@@ -114,10 +96,10 @@ parser.add_argument(
 cli_args = parser.parse_args()
 # animations[animation_to_play].play(motors, dmx)
 
-# absolute_positions[start_position].setMotors(motors)
-# dmx.sendPositions(motors)
+starting_positions[start_position].setMotors(motors)
+dmx.sendPositions(motors)
 
 if cli_args.live_move:
     mover(motors, dmx)
 elif cli_args.animation_frames:
-    animations[animation_to_play].stepThrough(motors, dmx, starting_position=absolute_positions[start_position])
+    animations[animation_to_play].stepThrough(motors, dmx, starting_position=starting_positions[start_position])
