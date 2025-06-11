@@ -11,6 +11,13 @@ POSITION_CHANNEL = 6 - 1 # channel 0indexed
 SPEED_CHANNEL = 7 - 1 # channel 0indexed
 DEFAULT_SPEED = 150
 
+# DMX speed value range
+MIN_SPEED_DMX = 0   # Fastest
+MAX_SPEED_DMX = 255 # Slowest
+
+MIN_SPEED = 200
+MAX_SPEED = 100
+
 BROADCAST_IP = "192.168.0.255"
 
 logger = logging.getLogger(__name__)
@@ -54,7 +61,7 @@ class Motor:
         
         self.new_position = new_position
 
-        # self.speed = self.calculateSpeed(position)
+        self.speed = self.calculateSpeed(position)
 
     def incrementByOne(self):
         self.new_position = self.current_pos + 1
@@ -62,15 +69,26 @@ class Motor:
     def decrementByOne(self):
         self.new_position = self.current_pos - 1
 
-    def calculateSpeed(self, new_position):
-        # TODO calculate
-        return 0
+    def calculateSpeed(self):
+        """
+        Calculate speed based on the distance between current_pos and new_position.
+        Speed is proportional to the distance, with 0 distance = 0 speed and 100 distance = 100 speed.
+        """
+        distance = abs(self.current_pos - self.new_position)
+        speed = max(0, min(100, int(distance)))
+        return speed
 
     def updateCurrentPos(self):
         self.current_pos = self.new_position
     
     def getCurrentPos(self):
         return self.current_pos
+
+    @classmethod
+    def calculateMotorSpeeds(motors: Dict[BP, "Motor"]):
+        # Calculate max distance
+        pass
+    
 
 @dataclass
 class Position:
@@ -126,6 +144,8 @@ class DMX:
 
         packet = bytearray(512)
 
+        # Motor.calculateMotorSpeeds(motors)
+
         for m in motors.values():
             
             start_channel = m.address - 1 # 0indexed
@@ -142,7 +162,13 @@ class DMX:
             dmx_value = self.getDmxValue(position)
 
             packet[start_channel + POSITION_CHANNEL] = dmx_value
-            packet[start_channel + SPEED_CHANNEL] = m.speed
+
+            # Invert and scale speed for DMX (0=fastest, 255=slowest)
+            dmx_speed = int(
+                MIN_SPEED_DMX + (MAX_SPEED_DMX - MIN_SPEED_DMX) * (m.speed / 100)
+            )
+            dmx_speed = max(MIN_SPEED_DMX, min(MAX_SPEED_DMX, dmx_speed))
+            packet[start_channel + SPEED_CHANNEL] = dmx_speed
         
         self.node.set(packet)
         self.node.show()
