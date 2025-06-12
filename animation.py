@@ -7,7 +7,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from movement_types import Position, Motor, BP, DMX
+from movement_types import Motor, BP
+from position import Position
+from DMX import DMX
 
 def get_pos_dict(motors: Dict[BP, Motor]):
 
@@ -51,8 +53,13 @@ class Animation:
         start = time.time()
         finished = False
 
+        if not isinstance(self.delays, list):
+            delays = [self.delays] * len(absolute_positions)
+        else:
+            delays = self.delays
+
         self._apply_position(absolute_positions[0], motors, dmx)
-        time.sleep(self.delays[0])
+        time.sleep(delays[0])
 
         while not finished:
             if loops is not None and loops <= 0:
@@ -60,14 +67,14 @@ class Animation:
                 break
             for i, pos in enumerate(absolute_positions[1:-1]):
                 self._apply_position(pos, motors, dmx)
-                time.sleep(self.delays[i])
+                time.sleep(delays[i])
                 if time_s is not None and (time.time() - start) > time_s:
                     finished = True
                     break
             loops -= 1
         
         self._apply_position(absolute_positions[-1], motors, dmx)
-        time.sleep(self.delays[-1])
+        time.sleep(delays[-1])
 
     def stepThrough(self, motors: Dict[BP, Motor], dmx: DMX, starting_position: Optional[Position] = None):
         print("Press 's' to go to next frame, 'a' for previous, press 'm' to quit:")

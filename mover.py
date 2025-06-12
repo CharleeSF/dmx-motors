@@ -4,7 +4,8 @@ import logging
 from typing import Dict
 import msvcrt
 
-from movement_types import BP, Motor, DMX
+from movement_types import BP, Motor
+from DMX import DMX
 
 logger = logging.getLogger(__name__)
 

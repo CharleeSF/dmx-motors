@@ -5,7 +5,9 @@ import time
 import logging
 import msvcrt
 
-from movement_types import Position, BP, Motor, DMX
+from movement_types import BP, Motor
+from position import Position
+from DMX import DMX
 from animation import Animation
 
 logger = logging.getLogger(__name__)

@@ -4,3 +4,14 @@
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 .\venv\Scripts\Activate.ps1
 
+# Speed measuring
+
+Trying to measuer how many "DMX" steps we can take compared to the speed of the motors
+
+- With the speed at 0, we seem to be able to take 50 steps in 4 seconds
+- With the speed at 50, we seem to be able to take 50 steps in 4.8 seconds
+- With the speed at 100, we seem to be able to take 50 steps in 6 seconds
+- WIth the speed at 200, we seem to be ale to take 50 steps in 12 seconds
+- With the speed at 250, we seem to be able to take 50 steps in 40 seconds
+
+

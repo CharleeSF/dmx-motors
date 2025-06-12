@@ -9,13 +9,16 @@ logging.basicConfig(
     datefmt="%H:%M:%S"
 )
 
-from movement_types import Position, BP, Motor, DMX
+from movement_types import BP, Motor
+from position import Position
+from DMX import DMX
 from mover import mover
 from animation import Animation
 from playbook import Playbook, PlaybookItem
 
 from animations import flap_animation
 from animations import move_down
+from animations import measure_time
 
 # PLAY SETTINGS
 min_pos_dmx = 0
@@ -23,7 +26,7 @@ max_pos_dmx = 50
 min_speed_dmx = 200 # 255 Is the slowest possible
 max_speed_dmx = 50 # 0 Is the fastest possible
 start_position = "zero"
-animation_to_play = "flap"
+animation_to_play = "measure_time"
 
 ########################################################################
 ########################################################################
@@ -85,6 +88,7 @@ starting_positions = {
 animations = {
     "flap": flap_animation,
     "move_down": move_down,
+    "measure_time" : measure_time,
 }
 
 
@@ -135,7 +139,7 @@ cli_args = parser.parse_args()
 
 playbook = Playbook(
     playbook=[
-        PlaybookItem(item=starting_positions["zero"], time_s=6, text="Go to zero"),
+        PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
         PlaybookItem(item=animations["flap"], loops=4, scale=1, text="High flap (2x)"),
         # PlaybookItem(item=starting_positions["zero"], time_s=5, text="Return to zero"),
         # PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
