@@ -13,5 +13,5 @@ flap_animation = Animation(
         wings_down,
         end_fly,
     ],
-    delays=[3.5,3.5,5],
+    # delays=[3.5,3.5,5],
 )
