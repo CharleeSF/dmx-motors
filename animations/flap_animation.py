@@ -2,7 +2,7 @@ from movement_types import BP
 from position import Position
 from animation import Animation, AnimationFrame
 
-from animations.positions import wings_up, wings_down, start_fly, end_fly
+from positions import wings_up, wings_down, start_fly, end_fly
 
 in_out_delays = {
     BP.nose: 0,

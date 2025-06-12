@@ -61,3 +61,35 @@ wings_down = Position(
         BP.r_wingtip: 100,
     },
 )
+
+lean_right = Position(
+    {
+        BP.nose: 50,
+        BP.head: 50,
+        BP.body: 44,
+        BP.tail: 44,
+        BP.l_wingtip: 0,
+        BP.l_wingmid: 0,
+        BP.l_winginner: 0,
+        BP.r_winginner: 53,
+        BP.r_wingmid: 89,
+        BP.r_wingtip: 100,
+    },
+    absolute=True,
+)
+
+lean_left = Position(
+    {
+        BP.nose: 50,
+        BP.head: 50,
+        BP.body: 44,
+        BP.tail: 44,
+        BP.l_wingtip: 100,
+        BP.l_wingmid: 89,
+        BP.l_winginner: 53,
+        BP.r_winginner: 0,
+        BP.r_wingmid: 0,
+        BP.r_wingtip: 0,
+    },
+    absolute=True,
+)

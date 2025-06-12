@@ -17,17 +17,17 @@ from mover import mover
 from animation import Animation
 from playbook import Playbook, PlaybookItem
 
-from animations import flap_animation
-from animations import move_down
-from animations import measure_time
+import animations
+
+import positions
 
 # PLAY SETTINGS
 min_pos_dmx = 0
-max_pos_dmx = 50
+max_pos_dmx = 70
 min_speed_dmx = 200 # 255 Is the slowest possible
 max_speed_dmx = 50 # 0 Is the fastest possible
 start_position = "zero"
-animation_to_play = "flap"
+animation_to_play = "left_right"
 
 ########################################################################
 ########################################################################
@@ -84,12 +84,14 @@ starting_positions = {
         },
         absolute=True,
     ),
+
 }
 
 animations = {
-    "flap": flap_animation,
-    "move_down": move_down,
-    "measure_time" : measure_time,
+    "flap": animations.flap_animation,
+    "move_down": animations.move_down,
+    "measure_time" : animations.measure_time,
+    "left_right": animations.left_right,
 }
 
 
@@ -138,12 +140,14 @@ cli_args = parser.parse_args()
 # starting_positions[start_position].setMotors(motors)
 # dmx.sendPositions(motors)
 
+slow_speeds = { bp: 20 for bp in motors.keys() }
+
 playbook = Playbook(
     playbook=[
         PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
         # PlaybookItem(item=starting_positions["mid"], time_s=3, text="Go to zero"),
         # PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
-        PlaybookItem(item=animations["flap"], loops=4, scale=1, text="High flap (2x)"),
+        # PlaybookItem(item=animations["flap"], loops=4, scale=1, text="High flap (2x)"),
         # PlaybookItem(item=starting_positions["zero"], time_s=5, text="Return to zero"),
         # PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
         # PlaybookItem(item=starting_positions["mid"], text="Go to mid"),
@@ -157,6 +161,7 @@ def reset_to_zero():
 atexit.register(reset_to_zero)
 
 if cli_args.live_move:
+    positions.lean_left.play(motors, dmx, hold=5, override_speeds=slow_speeds)
     mover(motors, dmx)
 elif cli_args.animation_frames:
     animations[animation_to_play].stepThrough(motors, dmx, starting_position=starting_positions[start_position])

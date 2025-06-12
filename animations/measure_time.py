@@ -2,8 +2,6 @@ from movement_types import BP
 from animation import Animation, AnimationFrame
 from position import Position
 
-from animations.positions import wings_up, wings_down, start_fly, end_fly
-
 # The values are added to the starting position
 # Values are in  percentage of movement range (offset - max_value)
 measure_time = Animation(

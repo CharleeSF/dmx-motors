@@ -16,12 +16,12 @@ class Position:
         # Check ranges here
         pass
 
-    def play(self, motors: Dict[BP, Motor], dmx: DMX, hold: Optional[int] = None, delays: Optional[dict] = None):
+    def play(self, motors: Dict[BP, Motor], dmx: DMX, hold: Optional[int] = None, delays: Optional[dict] = None, override_speeds: Optional[Dict[BP, int]] = None):
 
         start = time.time()
 
         self.setMotors(motors)
-        dmx.sendPositions(motors, delays=delays)
+        dmx.sendPositions(motors, delays=delays, override_speeds=override_speeds)
 
         if hold is not None:
             leftover_sleep = hold - (time.time() - start)

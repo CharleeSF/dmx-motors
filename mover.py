@@ -69,7 +69,7 @@ def mover(motors: Dict[BP, Motor], dmx: DMX):
 
     print("Press keys (press 'm' to quit):")
     while True:
-        char = msvcrt.getch().decode('utf-8')
+        char = msvcrt.getch().decode('utf-8').lower()
         print(f'You pressed: {char!r}')
 
         if char == 'm':
@@ -93,5 +93,5 @@ def mover(motors: Dict[BP, Motor], dmx: DMX):
                 logger.info("Moving %s down", command.bodypart)
                 motor.incrementByOne()
             
-            dmx.sendPositions(motors)
+            dmx.sendPositions(motors, override_speeds={bp : 100 for bp in motors.keys()})
 

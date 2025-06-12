@@ -66,7 +66,7 @@ class DMX:
         
         raise RuntimeError("Did not find speed for %d", dmx_speed)
 
-    def sendPositions(self, motors: Dict[BP, Motor], delays: Optional[dict] = None):
+    def sendPositions(self, motors: Dict[BP, Motor], delays: Optional[Dict[BP, float]] = None, override_speeds: Optional[Dict[BP, int]] = None):
 
         # Motor.calculateMotorSpeeds(motors)
 
@@ -91,7 +91,13 @@ class DMX:
 
             dmx_value_current_position = self.getDmxValuePosition(current_position)
             dmx_value_new_position = self.getDmxValuePosition(new_position)
-            dmx_value_speed = self.findNeartestSpeedKey(self.getDmxValueSpeed(motor.speed))
+
+            if override_speeds is not None and bodypart in override_speeds:
+                speed = override_speeds[bodypart]
+            else:
+                speed = motor.speed
+
+            dmx_value_speed = self.findNeartestSpeedKey(self.getDmxValueSpeed(speed))
             total_steps = abs(dmx_value_new_position - dmx_value_current_position)
             seconds[bodypart] = total_steps * self.speed_table[dmx_value_speed]
             logger.info("Motor %s: %d steps, %f seconds", bodypart, total_steps, seconds[bodypart])
