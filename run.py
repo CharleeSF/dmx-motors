@@ -146,7 +146,7 @@ playbook = Playbook(
         # PlaybookItem(item=starting_positions["zero"], time_s=5, text="Return to zero"),
         PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
         PlaybookItem(item=starting_positions["mid"], text="Go to mid"),
-        PlaybookItem(item=animations["flap"], loops=1, scale=0.7, text="Mid flap (2x)"),
+        PlaybookItem(item=animations["flap"], loops=3, scale=0.7, text="Mid flap (2x)"),
     ]
 )
 
