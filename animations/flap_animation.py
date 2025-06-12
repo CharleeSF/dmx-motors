@@ -20,10 +20,10 @@ in_out_delays = {
 # The values are added to the starting position
 # Values are in  percentage of movement range (offset - max_value)
 flap_animation = Animation(
-    [
-        AnimationFrame(start_fly, delays=in_out_delays),
+    start_frame=AnimationFrame(start_fly, delays=in_out_delays),
+    loop_frames=[
         AnimationFrame(wings_up, delays=in_out_delays),
         AnimationFrame(wings_down, delays=in_out_delays),
-        AnimationFrame(end_fly, delays=in_out_delays),
     ],
+    end_frame=AnimationFrame(end_fly, delays=in_out_delays),
 )

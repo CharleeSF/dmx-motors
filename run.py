@@ -23,7 +23,7 @@ import positions
 
 # PLAY SETTINGS
 min_pos_dmx = 0
-max_pos_dmx = 70
+max_pos_dmx = 40
 min_speed_dmx = 200 # 255 Is the slowest possible
 max_speed_dmx = 50 # 0 Is the fastest possible
 start_position = "zero"
@@ -36,75 +36,6 @@ logging.basicConfig(level=logging.INFO)
 
 dmx = DMX(min_pos_dmx=min_pos_dmx, max_pos_dmx=max_pos_dmx, min_speed_dmx=min_speed_dmx, max_speed_dmx=max_speed_dmx)
 
-# The values are added to 0
-# Values are in  percentage of movement range (offset - max_value)
-starting_positions = {
-    "zero": Position(
-        {
-            BP.nose: 0,
-            BP.head: 0,
-            BP.body: 0,
-            BP.tail: 0,
-            BP.l_wingtip: 0,
-            BP.l_wingmid: 0,
-            BP.l_winginner: 0,
-            BP.r_winginner: 0,
-            BP.r_wingmid: 0,
-            BP.r_wingtip: 0,
-        },
-        absolute=True,
-    ),
-    "mid": Position(
-        {
-            BP.nose: 50,
-            BP.head: 50,
-            BP.body: 50,
-            BP.tail: 50,
-            BP.l_wingtip: 50,
-            BP.l_wingmid: 50,
-            BP.l_winginner: 50,
-            BP.r_winginner: 50,
-            BP.r_wingmid: 50,
-            BP.r_wingtip: 50,
-        },
-        absolute=True,
-    ),
-    "dive": Position(
-        {
-            BP.nose: 100,
-            BP.head: 80,
-            BP.body: 40,
-            BP.tail: 0,
-            BP.l_wingtip: 0,
-            BP.l_wingmid: 0,
-            BP.l_winginner: 0,
-            BP.r_winginner: 0,
-            BP.r_wingmid: 0,
-            BP.r_wingtip: 0,
-        },
-        absolute=True,
-    ),
-
-}
-
-animations = {
-    "flap": animations.flap_animation,
-    "move_down": animations.move_down,
-    "measure_time" : animations.measure_time,
-    "left_right": animations.left_right,
-}
-
-
-# 1: nose
-# 11: head
-# 21: body
-# 31: tail
-# 41: left wing tip
-# 51: left middle wing
-# 61: left inner wing
-# 71: right wing tip
-# 81: right middle wing
-# 91: right inner wing
 motors = {
     BP.nose: Motor(1),
     BP.head: Motor(11),
@@ -135,28 +66,24 @@ parser.add_argument(
     help="Play animation",
 )
 cli_args = parser.parse_args()
-# animations[animation_to_play].play(motors, dmx)
-
-# starting_positions[start_position].setMotors(motors)
-# dmx.sendPositions(motors)
 
 slow_speeds = { bp: 20 for bp in motors.keys() }
 
 playbook = Playbook(
     playbook=[
-        PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
-        # PlaybookItem(item=starting_positions["mid"], time_s=3, text="Go to zero"),
-        # PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
-        # PlaybookItem(item=animations["flap"], loops=4, scale=1, text="High flap (2x)"),
-        # PlaybookItem(item=starting_positions["zero"], time_s=5, text="Return to zero"),
-        # PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
-        # PlaybookItem(item=starting_positions["mid"], text="Go to mid"),
-        # PlaybookItem(item=animations["flap"], loops=3, scale=0.7, text="Mid flap (2x)"),
+        PlaybookItem(item=positions.zero, time_s=3, text="Go to zero"),
+        PlaybookItem(item=animations.flap_animation, loops=2, scale=.7, text="High flap (2x)"),
+        # PlaybookItem(item=positions.zero, time_s=5, text="Return to zero"),
+        PlaybookItem(item=animations.move_down, loops=1, scale=1, text="Move down (full)"),
+        # PlaybookItem(item=positions.mid, time_s=5, text="Return to mid"),
+        PlaybookItem(item=animations.left_right, loops=1, scale=1, text="High flap (2x)", starting_position=positions.zero),
+        PlaybookItem(item=positions.mid, time_s=5, text="Return to mid"),
+        PlaybookItem(item=animations.flap_animation,loops=2, scale=.5, text="Low flap (2x)"),
     ]
 )
 
 def reset_to_zero():
-    starting_positions["zero"].play(motors, dmx, hold=5)
+    positions.zero.play(motors, dmx, hold=5)
 
 atexit.register(reset_to_zero)
 
@@ -164,8 +91,8 @@ if cli_args.live_move:
     positions.lean_left.play(motors, dmx, hold=5, override_speeds=slow_speeds)
     mover(motors, dmx)
 elif cli_args.animation_frames:
-    animations[animation_to_play].stepThrough(motors, dmx, starting_position=starting_positions[start_position])
+    animations.flap_animation.stepThrough(motors, dmx, starting_position=positions.zero)
 elif cli_args.play:
-    animations[animation_to_play].play(motors, dmx, starting_position=starting_positions[start_position])
+    animations.flap_animation.play(motors, dmx, starting_position=positions.zero, loops=2)
 else:
     playbook.play(motors, dmx)

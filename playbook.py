@@ -22,6 +22,7 @@ class PlaybookItem:
     time_s: Optional[int] = None
     scale: Optional[float] = None
     text: Optional[str] = None
+    starting_position: Optional[Position] = None
 
     def play(self, motors: Dict[BP, Motor], dmx: DMX):
         if self.text is not None:
@@ -33,7 +34,7 @@ class PlaybookItem:
             self.item.play(motors, dmx, hold=self.time_s)
         elif isinstance(self.item, Animation):
             logger.info("Playing animation")
-            self.item.play(motors, dmx, time_s=self.time_s,loops=self.loops, scale=self.scale)
+            self.item.play(motors, dmx, time_s=self.time_s,loops=self.loops, scale=self.scale, starting_position=self.starting_position)
 
 @dataclass
 class Playbook:

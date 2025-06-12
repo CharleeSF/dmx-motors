@@ -5,18 +5,12 @@ from position import Position
 import positions
 
 left_right = Animation(
-    [
+    loop_frames = [
         AnimationFrame(
-            positions.lean_right
+            positions.lean_right, hold=6
         ),
         AnimationFrame(
-            positions.lean_left
-        ),
-        AnimationFrame(
-            positions.lean_right
-        ),
-        AnimationFrame(
-            positions.lean_left
+            positions.lean_left, hold=6
         ),
     ],
 )

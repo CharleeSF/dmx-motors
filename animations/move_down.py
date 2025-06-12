@@ -5,7 +5,7 @@ from position import Position
 
 move_down = Animation(
     [
-        AnimationFrame(
+        AnimationFrame(Position(
             {
                 BP.nose: 100,
                 BP.head: 57,
@@ -18,8 +18,8 @@ move_down = Animation(
                 BP.r_wingmid: 13,
                 BP.r_wingtip: 5,
             },
-        ),
-        AnimationFrame(
+        )),
+        AnimationFrame(Position(
             {
                 BP.nose: 97,
                 BP.head: 71,
@@ -32,6 +32,6 @@ move_down = Animation(
                 BP.r_wingmid: 13,
                 BP.r_wingtip: 6,
             },
-        ),
+        )),
     ],
 )
