@@ -16,15 +16,15 @@ class Position:
         # Check ranges here
         pass
 
-    def play(self, motors: Dict[BP, Motor], dmx: DMX, delay: Optional[int] = None):
+    def play(self, motors: Dict[BP, Motor], dmx: DMX, hold: Optional[int] = None, delays: Optional[dict] = None):
 
         start = time.time()
 
         self.setMotors(motors)
-        dmx.sendPositions(motors)
+        dmx.sendPositions(motors, delays=delays)
 
-        if delay is not None:
-            leftover_sleep = delay - (time.time() - start)
+        if hold is not None:
+            leftover_sleep = hold - (time.time() - start)
             if leftover_sleep > 0:
                 logger.info("Sleeping for %f seconds", leftover_sleep)
                 time.sleep(leftover_sleep)

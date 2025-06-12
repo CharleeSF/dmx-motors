@@ -1,11 +1,11 @@
-from animation import Animation
+from animation import Animation, AnimationFrame
 from movement_types import BP
 from position import Position
 
 
 move_down = Animation(
     [
-        Position(
+        AnimationFrame(
             {
                 BP.nose: 100,
                 BP.head: 57,
@@ -19,7 +19,7 @@ move_down = Animation(
                 BP.r_wingtip: 5,
             },
         ),
-        Position(
+        AnimationFrame(
             {
                 BP.nose: 97,
                 BP.head: 71,
@@ -34,5 +34,4 @@ move_down = Animation(
             },
         ),
     ],
-    delays=[4, 5]
 )

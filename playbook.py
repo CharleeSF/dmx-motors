@@ -30,7 +30,7 @@ class PlaybookItem:
             logger.info("Playing position")
             if self.scale is not None:
                 raise RuntimeError("Cannot scale position")
-            self.item.play(motors, dmx, delay=self.time_s)
+            self.item.play(motors, dmx, hold=self.time_s)
         elif isinstance(self.item, Animation):
             logger.info("Playing animation")
             self.item.play(motors, dmx, time_s=self.time_s,loops=self.loops, scale=self.scale)

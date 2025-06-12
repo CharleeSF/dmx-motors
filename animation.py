@@ -16,66 +16,57 @@ def get_pos_dict(motors: Dict[BP, Motor]):
     return { bodypart : motor.current_pos for bodypart, motor in motors.items()}
 
 @dataclass
+class AnimationFrame:
+    relative_position: Position
+    hold: Optional[float] = None
+    delays: Optional[List[float]] = None
+    text: Optional[str] = None
+    scale: Optional[float] = None
+    loops: Optional[int] = None
+    absolute_position: Optional[Position] = None
+
+@dataclass
 class Animation:
 
     # A list with positions and per-step delays
-    relative_positions: List[Position]
-    delays: Optional[List[float]] = None
+    frames: List[AnimationFrame]
 
-    def getAbsolutePositions(self, starting_position: Position, scale: float = 1.0) -> list[Position]:
-        positions = []
-        for position in self.relative_positions:
-            positions.append(Position.addRelative(starting_position, position, scale=scale))
-        # Don't return the first one, this was the starting position before the animation started
-        return positions
-
-    def _get_absolute_positions(
-        self,
-        motors: Dict[BP, Motor],
-        starting_position: Optional[Position] = None,
-        scale: float = 1.0
-    ) -> list[Position]:
-        if starting_position is None:
+    def setAbsolutePositions(self, motors: Dict[BP, Motor], starting_position: Optional[Position] = None, scale: float = 1.0):
+        if not starting_position:
             starting_position = Position.getFromMotors(motors)
-        return self.getAbsolutePositions(starting_position, scale=scale)
+        for frame in self.frames:
+            frame.absolute_position = Position.addRelative(starting_position, frame.relative_position, scale=scale)
 
-    def _apply_position(
-        self,
-        pos: Position,
-        motors: Dict[BP, Motor],
-        dmx: DMX,
-        delay: Optional[float] = None,
-    ) -> None:
-        pos.play(motors, dmx, delay=delay)
+    def resetAbsolutePositions(self):
+        for frame in self.frames:
+            frame.absolute_position = None
 
     def play(self, motors: Dict[BP, Motor], dmx: DMX, time_s: Optional[int] = None, loops: Optional[int] = None, starting_position: Optional[Position] = None, scale: float = 1.0):
-        absolute_positions = self._get_absolute_positions(motors, starting_position, scale)
+        self.setAbsolutePositions(motors, starting_position, scale)
+
         start = time.time()
         finished = False
 
-        if not isinstance(self.delays, list):
-            delays = [self.delays] * len(absolute_positions)
-        else:
-            delays = self.delays
-
-        self._apply_position(absolute_positions[0], motors, dmx, delay=delays[0])
+        self.frames[0].absolute_position.play(motors, dmx, hold=self.frames[0].hold, delays=self.frames[0].delays)
 
         while not finished:
             if loops is not None and loops <= 0:
                 finished = True
                 break
-            for i, pos in enumerate(absolute_positions[1:-1]):
-                self._apply_position(pos, motors, dmx, delay=delays[i])
+            for i, frame in enumerate(self.frames[1:-1]):
+                frame.absolute_position.play(motors, dmx, hold=frame.hold, delays=frame.delays)
                 if time_s is not None and (time.time() - start) > time_s:
                     finished = True
                     break
             loops -= 1
         
-        self._apply_position(absolute_positions[-1], motors, dmx, delay=delays[-1])
+        self.frames[-1].absolute_position.play(motors, dmx, hold=self.frames[-1].hold, delays=self.frames[-1].delays)
+
+        self.resetAbsolutePositions()
 
     def stepThrough(self, motors: Dict[BP, Motor], dmx: DMX, starting_position: Optional[Position] = None):
         print("Press 's' to go to next frame, 'a' for previous, press 'm' to quit:")
-        absolute_positions = self._get_absolute_positions(motors, starting_position)
+        self.setAbsolutePositions(motors, starting_position)
         position_index = -1
         while True:
             char = msvcrt.getch().decode('utf-8')
@@ -87,7 +78,7 @@ class Animation:
                     raise ValueError("There is no previous frame to go to")
                 position_index += 1
             elif char == 's':
-                if position_index == len(absolute_positions) - 1:
+                if position_index == len(self.frames) - 1:
                     position_index = 0
                 else:
                     position_index += 1
@@ -99,8 +90,8 @@ class Animation:
                 continue
             
             logger.info("Position index: %d", position_index)
-            position = absolute_positions[position_index]
-            self._apply_position(position, motors, dmx)
+            position = self.frames[position_index].absolute_position
+            position.play(motors, dmx, delays=self.frames[position_index].delays)
 
             print("\nFinal positions:")
             for bodypart, motor in motors.items():

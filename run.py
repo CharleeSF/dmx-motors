@@ -1,3 +1,4 @@
+import atexit
 import logging
 import sys
 
@@ -139,16 +140,21 @@ cli_args = parser.parse_args()
 
 playbook = Playbook(
     playbook=[
-        PlaybookItem(item=starting_positions["zero"], time_s=10, text="Go to zero"),
+        PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
         # PlaybookItem(item=starting_positions["mid"], time_s=3, text="Go to zero"),
         # PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
         PlaybookItem(item=animations["flap"], loops=4, scale=1, text="High flap (2x)"),
         # PlaybookItem(item=starting_positions["zero"], time_s=5, text="Return to zero"),
-        PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
-        PlaybookItem(item=starting_positions["mid"], text="Go to mid"),
-        PlaybookItem(item=animations["flap"], loops=3, scale=0.7, text="Mid flap (2x)"),
+        # PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
+        # PlaybookItem(item=starting_positions["mid"], text="Go to mid"),
+        # PlaybookItem(item=animations["flap"], loops=3, scale=0.7, text="Mid flap (2x)"),
     ]
 )
+
+def reset_to_zero():
+    starting_positions["zero"].play(motors, dmx, hold=5)
+
+atexit.register(reset_to_zero)
 
 if cli_args.live_move:
     mover(motors, dmx)

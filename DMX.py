@@ -20,6 +20,8 @@ class DMX:
         250: 0.8,
     }
 
+    packet = bytearray(512)
+
     def __init__(self, min_pos_dmx=0, max_pos_dmx=60, min_speed_dmx=0, max_speed_dmx=255):
         self.min_pos_dmx = min_pos_dmx
         self.max_pos_dmx = max_pos_dmx
@@ -64,20 +66,22 @@ class DMX:
         
         raise RuntimeError("Did not find speed for %d", dmx_speed)
 
-    def sendPositions(self, motors: Dict[BP, Motor]):
-
-        packet = bytearray(512)
+    def sendPositions(self, motors: Dict[BP, Motor], delays: Optional[dict] = None):
 
         # Motor.calculateMotorSpeeds(motors)
 
-        dmx_positions = []
-        dmx_speeds = []
-        seconds = []
+        dmx_positions = {}
+        dmx_speeds = {}
+        seconds = {}
 
-        for m in motors.values():
-            start_channel = m.address - 1 # 0indexed
-            current_position = m.current_pos
-            new_position = m.new_position
+        # Use the passed-in delays dict, or default to no delays
+        delay_table = delays if delays is not None else {}
+        # First calculate
+        for bodypart, motor in motors.items():
+
+            current_position = motor.current_pos
+            new_position = motor.new_position
+
             if new_position < 0:
                 logger.warning("DMX: Position < 0! (is %d)", new_position)
                 new_position = 0
@@ -87,28 +91,47 @@ class DMX:
 
             dmx_value_current_position = self.getDmxValuePosition(current_position)
             dmx_value_new_position = self.getDmxValuePosition(new_position)
-            dmx_value_speed = self.findNeartestSpeedKey(self.getDmxValueSpeed(m.speed))
+            dmx_value_speed = self.findNeartestSpeedKey(self.getDmxValueSpeed(motor.speed))
             total_steps = abs(dmx_value_new_position - dmx_value_current_position)
-            seconds.append(total_steps * self.speed_table[dmx_value_speed])
-            logger.info("Motor %s: %d steps, %f seconds", m.address, total_steps, seconds[-1])
+            seconds[bodypart] = total_steps * self.speed_table[dmx_value_speed]
+            logger.info("Motor %s: %d steps, %f seconds", bodypart, total_steps, seconds[bodypart])
 
-            dmx_positions.append(dmx_value_new_position)
-            dmx_speeds.append(dmx_value_speed)
-
-            packet[start_channel + POSITION_CHANNEL] = dmx_value_new_position
-            packet[start_channel + SPEED_CHANNEL] = dmx_value_speed
+            dmx_positions[bodypart] = dmx_value_new_position
+            dmx_speeds[bodypart] = dmx_value_speed
         
         logger.info("Motor speeds: %s", [m.speed for m in motors.values()])
         logger.info("Motor positions: %s", [m.new_position for m in motors.values()])
-        logger.info("DMX positions: %s", dmx_positions)
-        logger.info("DMX speeds: %s", dmx_speeds)
-        logger.info("Seconds: %s", seconds)
+        logger.info("DMX positions: %s", dmx_positions.values())
+        logger.info("DMX speeds: %s", dmx_speeds.values())
+        logger.info("Seconds original: %s", seconds.values())
 
-        self.node.set(packet)
-        self.node.show()
+        for bodypart, delay in delay_table.items():
+            seconds[bodypart] += delay
 
-        logger.info("Sleeping for %f seconds to finish the movement", max(seconds))
-        time.sleep(max(seconds))
+        logger.info("Seconds with delay: %s", seconds.values())
+
+        # Then set
+        start = time.time()
+        if delay_table:
+            time_to_do_movement = max(max(seconds.values()), max(delay_table.values())) - max(delay_table.values())
+        else:
+            time_to_do_movement = max(seconds.values())
+        logger.info("Setting the movement over %f seconds", time_to_do_movement)
+        while True:
+            for bodypart, motor in motors.items():
+
+                if bodypart in delay_table:
+                    if time.time() - start < delay_table[bodypart]:
+                        continue
+
+                start_channel = motor.address - 1 # 0indexed
+                self.packet[start_channel + POSITION_CHANNEL] = dmx_positions[bodypart]
+                self.packet[start_channel + SPEED_CHANNEL] = dmx_speeds[bodypart]
+            
+            self.node.set(self.packet)
+            self.node.show()
+            if time.time() - start >= time_to_do_movement:
+                break
 
         for m in motors.values():
             m.updateCurrentPos()
