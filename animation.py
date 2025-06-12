@@ -43,10 +43,10 @@ class Animation:
         self,
         pos: Position,
         motors: Dict[BP, Motor],
-        dmx: DMX
+        dmx: DMX,
+        delay: float,
     ) -> None:
-        pos.setMotors(motors)
-        dmx.sendPositions(motors)
+        pos.play(motors, dmx, delay=delay)
 
     def play(self, motors: Dict[BP, Motor], dmx: DMX, time_s: Optional[int] = None, loops: Optional[int] = None, starting_position: Optional[Position] = None, scale: float = 1.0):
         absolute_positions = self._get_absolute_positions(motors, starting_position, scale)
@@ -58,23 +58,20 @@ class Animation:
         else:
             delays = self.delays
 
-        self._apply_position(absolute_positions[0], motors, dmx)
-        time.sleep(delays[0])
+        self._apply_position(absolute_positions[0], motors, dmx, delay=delays[0])
 
         while not finished:
             if loops is not None and loops <= 0:
                 finished = True
                 break
             for i, pos in enumerate(absolute_positions[1:-1]):
-                self._apply_position(pos, motors, dmx)
-                time.sleep(delays[i])
+                self._apply_position(pos, motors, dmx, delay=delays[i])
                 if time_s is not None and (time.time() - start) > time_s:
                     finished = True
                     break
             loops -= 1
         
-        self._apply_position(absolute_positions[-1], motors, dmx)
-        time.sleep(delays[-1])
+        self._apply_position(absolute_positions[-1], motors, dmx, delay=delays[-1])
 
     def stepThrough(self, motors: Dict[BP, Motor], dmx: DMX, starting_position: Optional[Position] = None):
         print("Press 's' to go to next frame, 'a' for previous, press 'm' to quit:")
