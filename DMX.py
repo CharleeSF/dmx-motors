@@ -2,6 +2,7 @@ from typing import Dict, Optional
 from movement_types import Motor, BP
 from stupidArtnet import StupidArtnet
 
+import time
 import logging
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,7 @@ SPEED_CHANNEL = 7 - 1 # channel 0indexed
 class DMX:
 
     speed_table = {
-        0: 0.08, # Steps/second
+        0: 0.08, # second/step
         50: 0.096,
         100: 0.12,
         200: 0.24,
@@ -33,9 +34,24 @@ class DMX:
         return self.min_pos_dmx + relative
 
     def getDmxValueSpeed(self, speed: int):
-        return int(
-            self.min_speed_dmx + (self.max_speed_dmx - self.min_speed_dmx) * (speed / 100)
-        )
+
+        if speed > 100:
+            raise ValueError("Speed cannot be greater than 100")
+        if speed < 0:
+            raise ValueError("Speed cannot be less than 0")
+        
+        if speed == 0:
+            return self.min_speed_dmx
+        
+        if speed == 100:
+            return self.max_speed_dmx
+
+        speed_range = self.min_speed_dmx - self.max_speed_dmx
+        speed_relative = speed / 100
+        relative_dmx_speed = speed_relative * speed_range
+        dmx_speed = self.min_speed_dmx - relative_dmx_speed
+        logger.info("Getting speed for %d, relative speed: %f, relative dmx speed: %f, dmx speed: %d", speed, speed_relative, relative_dmx_speed, dmx_speed)
+        return int(dmx_speed)
 
     def findNeartestSpeedKey(self, dmx_speed: int):
         """
@@ -43,10 +59,10 @@ class DMX:
         So that means it rounds "up" to fastness
         """
         for speed in sorted(self.speed_table.keys(), reverse=True):
-            if speed < dmx_speed:
+            if speed <= dmx_speed:
                 return speed
         
-        raise RuntimeError("Did not find speed")
+        raise RuntimeError("Did not find speed for %d", dmx_speed)
 
     def sendPositions(self, motors: Dict[BP, Motor]):
 
@@ -73,12 +89,13 @@ class DMX:
             dmx_value_new_position = self.getDmxValuePosition(new_position)
             dmx_value_speed = self.findNeartestSpeedKey(self.getDmxValueSpeed(m.speed))
             total_steps = abs(dmx_value_new_position - dmx_value_current_position)
-            seconds.append(total_steps / self.speed_table[dmx_value_speed])
+            seconds.append(total_steps * self.speed_table[dmx_value_speed])
+            logger.info("Motor %s: %d steps, %f seconds", m.address, total_steps, seconds[-1])
 
-            dmx_positions.append(dmx_value_position)
+            dmx_positions.append(dmx_value_new_position)
             dmx_speeds.append(dmx_value_speed)
 
-            packet[start_channel + POSITION_CHANNEL] = dmx_value_position
+            packet[start_channel + POSITION_CHANNEL] = dmx_value_new_position
             packet[start_channel + SPEED_CHANNEL] = dmx_value_speed
         
         logger.info("Motor speeds: %s", [m.speed for m in motors.values()])

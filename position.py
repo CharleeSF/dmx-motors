@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from movement_types import BP, Motor
 from DMX import DMX
 import time
-
+import logging
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Position:

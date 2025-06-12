@@ -140,7 +140,7 @@ cli_args = parser.parse_args()
 playbook = Playbook(
     playbook=[
         PlaybookItem(item=starting_positions["zero"], time_s=3, text="Go to zero"),
-        PlaybookItem(item=animations["flap"], loops=4, scale=1, text="High flap (2x)"),
+        PlaybookItem(item=animations["measure_time"], loops=4, scale=1, text="High flap (2x)"),
         # PlaybookItem(item=starting_positions["zero"], time_s=5, text="Return to zero"),
         # PlaybookItem(item=animations["move_down"], loops=1, scale=1, text="Move down (full)"),
         # PlaybookItem(item=starting_positions["mid"], time_s=5, text="Go to mid"),

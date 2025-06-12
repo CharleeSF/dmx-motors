@@ -7,7 +7,7 @@ import msvcrt
 
 from stupidArtnet import StupidArtnet
 
-DEFAULT_SPEED = 150
+DEFAULT_SPEED = 50 # Percentage!
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,7 @@ class Motor:
         """
         distance = abs(self.current_pos - self.new_position)
         speed = max(0, min(100, int(distance)))
+        logger.info("Calculating speed for %d, distance: %d, speed: %d", self.current_pos, distance, speed)
         return speed
 
     def updateCurrentPos(self):

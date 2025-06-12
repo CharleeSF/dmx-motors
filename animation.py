@@ -20,7 +20,7 @@ class Animation:
 
     # A list with positions and per-step delays
     relative_positions: List[Position]
-    delays: List[float]
+    delays: Optional[List[float]] = None
 
     def getAbsolutePositions(self, starting_position: Position, scale: float = 1.0) -> list[Position]:
         positions = []
@@ -44,7 +44,7 @@ class Animation:
         pos: Position,
         motors: Dict[BP, Motor],
         dmx: DMX,
-        delay: float,
+        delay: Optional[float] = None,
     ) -> None:
         pos.play(motors, dmx, delay=delay)
 

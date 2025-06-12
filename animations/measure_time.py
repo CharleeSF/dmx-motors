@@ -29,10 +29,10 @@ measure_time = Animation(
                 BP.body: 0,
                 BP.tail: 0,
                 BP.l_wingtip: 100,
-                BP.l_wingmid: 0,
+                BP.l_wingmid: 50,
                 BP.l_winginner: 0,
                 BP.r_winginner: 0,
-                BP.r_wingmid: 0,
+                BP.r_wingmid: 50,
                 BP.r_wingtip: 100,
             },
         ),
@@ -66,5 +66,5 @@ measure_time = Animation(
         ),
     ],
 
-    delays=[6]*4,
+    # delays=[6]*4,
 )
